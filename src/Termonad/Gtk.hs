@@ -17,14 +17,16 @@ module Termonad.Gtk where
 
 import Termonad.Prelude
 
-import Control.Monad.Fail (MonadFail, fail)
 import Data.GI.Base (ManagedPtr, withManagedPtr)
+import Data.Text (unpack)
 import GHC.Stack (HasCallStack)
 import GI.Gdk
   ( GObject
   , castTo
   )
-import GI.Gio (ApplicationFlags)
+import GI.GdkPixbuf (Pixbuf, pixbufNewFromStream)
+import GI.Gio (ApplicationFlags, Cancellable)
+import GI.Gio.Objects.MemoryInputStream (memoryInputStreamNewFromData)
 import GI.Gtk (Application, IsWidget, Widget(Widget), applicationNew, builderGetObject, toWidget)
 import qualified GI.Gtk as Gtk
 import GI.Vte
@@ -33,22 +35,18 @@ import GI.Vte
   , terminalSetEnableSixel
 #endif
   )
-
+import System.Exit (die)
 
 objFromBuildUnsafe ::
      GObject o => Gtk.Builder -> Text -> (ManagedPtr o -> o) -> IO o
 objFromBuildUnsafe builder name constructor = do
   maybePlainObj <- builderGetObject builder name
   case maybePlainObj of
-    Nothing -> error $ "Couldn't get " <> unpack name <> " from builder!"
+    Nothing -> error $ unpack $ "Couldn't get " <> name <> " from builder!"
     Just plainObj -> do
       maybeNewObj <- castTo constructor plainObj
       case maybeNewObj of
-        Nothing ->
-          error $
-            "Got " <>
-            unpack name <>
-            " from builder, but couldn't convert to object!"
+        Nothing -> error $ unpack $ "Got " <> name <> " from builder, but couldn't convert to object!"
         Just obj -> pure obj
 
 -- | Unsafely creates a new 'Application'.  This calls 'fail' if it cannot
@@ -93,3 +91,15 @@ terminalSetEnableSixelIfExists t b = do
   terminalSetEnableSixel t b
 #endif
   pure ()
+
+-- | Load an image in a 'ByteString' into a 'Pixbuf'.
+--
+-- Supports all image types that 'pixbufNewFromStream' supports.
+imgToPixbuf :: ByteString -> IO Pixbuf
+imgToPixbuf imgByteString = do
+  inputStream <- memoryInputStreamNewFromData imgByteString Nothing
+  maybePixbuf <- pixbufNewFromStream inputStream (Nothing :: Maybe Cancellable)
+  case maybePixbuf of
+    Nothing ->
+      die "imgToPixbuf: Unexpected error when trying to convert an image to a Pixbuf"
+    Just pixbuf -> pure pixbuf

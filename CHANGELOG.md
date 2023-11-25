@@ -1,5 +1,15 @@
 ## (next)
 
+*   Embed the Termonad icon into the Termonad library (instead of having it set
+    as a `data-file` in `termonad.cabal`).
+
+    This fixes a problem some users were seeing when garbaging-collecting their
+    Nix store and losing the required `termonad-lambda.png` file that their
+    Termonad binary was referencing:
+    [#165](https://github.com/cdepillabout/termonad/issues/165)
+
+    Thanks [@refaelsh](https://github.com/refaelsh)! [#236](https://github.com/cdepillabout/termonad/pull/236)
+
 *   Add support for setting Termonad options with CLI arguments.  Add a whole
     CLI argument parser based on optparse-applicative.
     [#234](https://github.com/cdepillabout/termonad/pull/234)
@@ -12,6 +22,20 @@
     In your own `termonad.hs` file, if you want to not use this CLI argument
     funtionality, you should be able to use the `Termonad.start` function (in
     place of `Termonad.defaultMain`).
+
+*   Rename the `Termonad.PreferencesFile` module to `Termonad.Preferences.File`.
+
+    Also, add a `Termonad.Preferences` module that re-exports everything helpful
+    from the `Termonad.Preferences.File` module.  Also, some of the
+    preferences-related functionality from `Termonad.App` has been moved into
+    `Termonad.Preferences`.
+    [#238](https://github.com/cdepillabout/termonad/pull/238)
+
+*   Move the `defaultMain` function from `Termonad.App` to `Termonad.Startup`.
+    (It is also exported from the top-level `Termonad` module, so most users
+    will likely want to get it from there.)
+    [#239](https://github.com/cdepillabout/termonad/pull/239)
+
 
 ## 4.5.0.0
 

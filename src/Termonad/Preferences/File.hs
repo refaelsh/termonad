@@ -1,6 +1,19 @@
 {-# LANGUAGE CPP #-}
 
-module Termonad.PreferencesFile where
+-- | Description : Read and write to the Preferences file
+-- Copyright     : (c) Dennis Gosnell, 2023
+-- License       : BSD3
+-- Stability     : experimental
+-- Portability   : POSIX
+--
+-- This module contains functions for reading and writing to the preferences file.
+--
+-- The preferences file is generally stored in
+-- @~/.config/termonad/termonad.yaml@.  It stores run-time preferences that
+-- have been set through the Preferences dialog.  Preferences are loaded on
+-- app startup, but only if the @termonad.hs@ configuration file doesn't exist.
+
+module Termonad.Preferences.File where
 
 import Termonad.Prelude
 
@@ -9,17 +22,18 @@ import Data.Aeson (Result(..), fromJSON)
 #if MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.Aeson.KeyMap as KeyMap
 #endif
+import qualified Data.ByteString as ByteString
 import qualified Data.HashMap.Strict as HashMap
+import Data.Text (pack)
 import Data.Yaml (ParseException, ToJSON (toJSON), decodeFileEither, encode, prettyPrintParseException)
 import Data.Yaml.Aeson (Value(..))
-
 import System.Directory
   ( XdgDirectory(XdgConfig)
   , createDirectoryIfMissing
   , doesFileExist
   , getXdgDirectory
   )
-
+import System.FilePath ((</>))
 import Termonad.Types
   ( ConfigOptions
   , TMConfig(TMConfig, hooks, options)
@@ -184,7 +198,7 @@ writePreferencesFile confFile options = do
         "# The settings in this file will be ignored if you have a\n" <>
         "# termonad.hs file in this same directory.\n\n" <>
         yaml
-  writeFile confFile yamlWithComment
+  ByteString.writeFile confFile yamlWithComment
 
 -- | Save the configuration to the preferences file
 -- @~\/.config\/termonad\/termonad.yaml@
@@ -192,3 +206,4 @@ saveToPreferencesFile :: TMConfig -> IO ()
 saveToPreferencesFile TMConfig { options = options } = do
   confFile <- getPreferencesFile
   writePreferencesFile confFile options
+
